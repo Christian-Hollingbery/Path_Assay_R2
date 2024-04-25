@@ -14,6 +14,7 @@ Long_data <- pivot_longer(Path_Test_Scoring_Clean,
                           cols = -Treatment_No, 
                           names_to = "Week", 
                           values_to = "Disease_score")
+Long_data[,1]= lapply(Long_data[,1], as.factor)
 Long_data <- Long_data %>%
   group_by(Treatment_No, Week) %>%
   summarise(Mean_Disease_Score = mean(Disease_score, na.rm = TRUE),
