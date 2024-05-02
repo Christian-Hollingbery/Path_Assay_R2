@@ -23,3 +23,4 @@ ggplot(Long_data, aes(x = Week, y = Mean_Disease_Score, group = Treatment_No, co
   geom_point() +
   geom_line() +
   geom_errorbar(aes(ymin = Mean_Disease_Score - Standard_Error, ymax = Mean_Disease_Score + Standard_Error), width=0.2, colour="black", alpha=0.5, linewidth=0.5)
+
