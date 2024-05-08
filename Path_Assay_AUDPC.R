@@ -42,17 +42,42 @@ ggqqplot(Path_Test_AUDPC_Clean, "audpc", ggtheme = theme_bw()) +
   facet_grid(Infection + Plant_Type ~ Solution, labeller = "label_both")
 Path_Test_AUDPC %>%
  levene_test(audpc ~ Infection*Plant_Type*Solution) #This tests the homogeneity of varience. IOW, is the varience between the samples equal. Must be above 0.05 p value to show this. 
-model <-  lm(audpc ~ Infection*Plant_Type*Solution, data = Path_Test_AUDPC) #This is one way of doing an anova test, which then enables you to remove interaction terms if needed
-summary(model)
-#remove interaction term on quasi model. You need to do this if the three way interaction is not significant.
-model_simple <- update(model,~.- Infection:Plant_Type:Solution)
-anova(model, model_simple, test = "F") #removal of interaction term does not sig. affect model if greater than 0.05 p value.
-summary(model_simple)
+model <-  anova_test(audpc ~ Infection*Plant_Type*Solution, data = Path_Test_AUDPC) #This is one way of doing an anova test, which then enables you to remove interaction terms if needed
+model
+#remove interaction term on quasi model. You could do this if the three way interaction is not significant (can only be done with lm rather than anova_test function)
+#model_simple <- update(model,~.- Infection:Plant_Type:Solution)
+#anova(model, model_simple, test = "F") #removal of interaction term does not sig. affect model if greater than 0.05 p value.
+#summary(model_simple)
 #continue with model without interaction term
-Simple_Main_Effects <- Path_Test_AUDPC %>%
-  group_by(Infection, Plant_Type) %>%
-  anova_test(audpc ~ Solution, error = model_simple)
-Simple_Main_Effects %>% filter(Solution == "E")
+
+#carry out simple - simple main effects (this is not needed if you do not have a significant 3 way interaction)
+#Simple_Main_Effects <- Path_Test_AUDPC %>%
+ # group_by(Infection, Solution) %>%
+  #anova_test(audpc ~ Plant_Type, error = model_simple) 
+
+#Simple_Main_Effects <- as.data.frame(Simple_Main_Effects)
+#Simple_Main_Effects %>% filter(Solution == "E") 
+#The code above can be used to just show the rows with Estradiol treatment, but its not neccessary to do this here.
+
+# Do pairwise comparisons
+library(emmeans)
+pwc <- Path_Test_AUDPC %>%
+  group_by(Plant_Type, Infection) %>%
+  emmeans_test(audpc ~ Solution, p.adjust.method = "bonferroni") %>%
+  select(-df, -statistic, -p) # Remove details
+pwc #This shows a sig difference between E and D when applied to M plants which are infected!
+
+# Visualization: box plots with p-values
+pwc <- pwc %>% add_xy_position(x = "Solution")
+bxp +
+  stat_pvalue_manual(
+    pwc, color = "Plant_Type", linetype = "Infection", hide.ns = TRUE,
+    tip.length = 0, step.increase = 0.1, step.group.by = "Plant_Type"
+  ) +
+  labs(
+    subtitle = get_test_label(model, detailed = TRUE),
+    caption = get_pwc_label(pwc)
+  )
 
 
 
