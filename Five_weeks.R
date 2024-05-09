@@ -67,19 +67,27 @@ ggqqplot(Path_Test_AUDPC_Clean, "audpc", ggtheme = theme_bw()) +
   facet_grid(Infection + Plant_Type ~ Solution, labeller = "label_both")
 Path_Test_AUDPC_Clean %>%
   levene_test(audpc ~ Infection*Plant_Type*Solution) #This tests the homogeneity of varience. IOW, is the varience between the samples equal. Must be above 0.05 p value to show this. 
-model <-  lm(audpc ~ Infection*Plant_Type*Solution, data = Path_Test_AUDPC_Clean) #This is one way of doing an anova test, which then enables you to remove interaction terms if needed
+model <-  anova_test(audpc ~ Infection*Plant_Type*Solution, data = Path_Test_AUDPC_Clean) #This is one way of doing an anova test, which then enables you to remove interaction terms if needed
 model
-#remove interaction term on quasi model. You need to do this if the three way interaction is not significant.
-model_simple <- update(model,~.- Infection:Plant_Type:Solution)
-anova(model, model_simple, test = "F") #removal of interaction term does not sig. affect model if greater than 0.05 p value.
-summary(model_simple)
-#continue with model without interaction term
-
-
-# Group the data by gender and 
-# fit simple two-way interaction 
-Path_Test_AUDPC_Clean %>%
-  group_by(Plant_Type) %>%
-  anova_test(audpc ~ Solution*Infection, error = model_simple)
+pwc <- Path_Test_AUDPC_Clean %>%
+  group_by(Plant_Type, Infection) %>%
+  emmeans_test(audpc ~ Solution, p.adjust.method = "bonferroni") %>%
+  select(-df, -statistic, -p) # Remove details
+pwc #This shows a sig difference between E and D when applied to M plants which are infected!
+pwc[,3]= lapply(pwc[,3], as.factor)
+# Visualization: bar chart of mean Audpc with p-values
+mean_audpc_5 <- Path_Test_AUDPC_Clean %>%
+  group_by( Solution, Infection, Plant_Type) %>%
+  summarise(Mean_audpc = mean(audpc, na.rm = TRUE),
+            Standard_Error = sd(audpc, na.rm = TRUE) / sqrt(sum(!is.na(audpc))))
+bar_5 <- ggplot(data = mean_audpc, aes(x = interaction(Infection, Plant_Type), y = Mean_audpc, fill = Solution)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(
+    x = "Infection - Plant Type",
+    y = "Mean audpc",
+    fill = "Solution")+
+  geom_errorbar(aes(ymin = Mean_audpc - Standard_Error, ymax = Mean_audpc + Standard_Error),
+                position = position_dodge(width = 0.9), width=0.2, colour="black", alpha=0.5, linewidth=0.5)
+bar_5
 
 

@@ -2,16 +2,16 @@ library(agricolae)
 setwd("/Users/Kitchen/Library/CloudStorage/OneDrive-UniversityofKent/2nd Rotation/Lab work/Plant work/Path Test/Scoring")
 Path_Test_AUDPC <-read.csv("Path Test Scoring.csv")
 head(Path_Test_AUDPC)
-weeks <-c(1:7) # you could use hours and put more time points
+weeks <-c(1:8) # you could use hours and put more time points
 factors_1 <- c(2:5)
 Path_Test_AUDPC[,2:5]= lapply(Path_Test_AUDPC[,factors_1], as.factor) # you need to make all extra label/ treatment/rep/block columns in your table factors
-Path_Test_AUDPC[,13]=audpc(Path_Test_AUDPC[,c(6:12)],weeks) 
-colnames(Path_Test_AUDPC)[13]=c('audpc')
+Path_Test_AUDPC[,14]=audpc(Path_Test_AUDPC[,c(6:13)],weeks) 
+colnames(Path_Test_AUDPC)[14]=c('audpc')
 write.csv(Path_Test_AUDPC, file = "AUDPC.csv", row.names=FALSE)
 view(Path_Test_AUDPC)
 set.seed(123)
 library(datarium)
-Path_Test_AUDPC_Clean <- Path_Test_AUDPC[ -c(6:12) ]
+Path_Test_AUDPC_Clean <- Path_Test_AUDPC[ -c(6:13) ]
 #Check Random sample
 Path_Test_AUDPC_Clean %>%
   sample_n_by(Plant_Type, Infection, Solution, size = 1)
@@ -62,38 +62,39 @@ model
 # Do pairwise comparisons
 library(emmeans)
 pwc <- Path_Test_AUDPC %>%
-  group_by(Plant_Type, Infection, Solution) %>%
+  group_by(Plant_Type, Infection) %>%
   emmeans_test(audpc ~ Solution, p.adjust.method = "bonferroni") %>%
   select(-df, -statistic, -p) # Remove details
 pwc #This shows a sig difference between E and D when applied to M plants which are infected!
-get_emmeans(pwc)
+pwc[,3]= lapply(pwc[,3], as.factor)
 # Visualization: box plots with p-values
-pwc <- pwc %>% add_xy_position(x = "Treatment_No")
 bxp +
   stat_pvalue_manual(
     pwc, color = "Plant_Type", linetype = "Infection", hide.ns = TRUE,
     tip.length = 0, step.increase = 0.1, step.group.by = "Plant_Type"
-  ) +
-  labs(
-    subtitle = get_test_label(model, detailed = TRUE),
-    caption = get_pwc_label(pwc)
+  )
 
     mean_audpc <- Path_Test_AUDPC_Clean %>%
-      group_by(Treatment_No, Solution) %>%
+      group_by( Solution, Infection, Plant_Type) %>%
       summarise(Mean_audpc = mean(audpc, na.rm = TRUE),
                 Standard_Error = sd(audpc, na.rm = TRUE) / sqrt(sum(!is.na(audpc))))
     
-    bar <-  ggbarplot(
-      mean_audpc, x = "Treatment_No", y = "Mean_audpc",
-      fill = "Solution", palette = "jco") +
-      geom_errorbar(aes(ymin = Mean_audpc - Standard_Error, ymax = Mean_audpc + Standard_Error), width=0.2, colour="black", alpha=0.5, linewidth=0.5)
+bar_5 <- ggplot(data = mean_audpc, aes(x = interaction(Infection, Plant_Type), y = Mean_audpc, fill = Solution)) +
+      geom_bar(stat = "identity", position = "dodge") +
+      labs(
+        x = "Infection - Plant Type",
+        y = "Mean audpc",
+        fill = "Solution")+
+      geom_errorbar(aes(ymin = Mean_audpc - Standard_Error, ymax = Mean_audpc + Standard_Error),
+                    position = position_dodge(width = 0.9), width=0.2, colour="black", alpha=0.5, linewidth=0.5)
     bar
-    bar +
-      stat_pvalue_manual(
-        pwc,hide.ns = TRUE,
-        tip.length = 0, step.increase = 0.1, step.group.by = "Infection"
-      ) 
+pwc <- pwc %>% add_xy_position(x = "Solution")
+pwc.filtered <- pwc %>% filter(Plant_Type == "M", Infection == "I")
+bar +
+  stat_pvalue_manual(
+    pwc.filtered, color = "Plant_Type", linetype = "Plant_Type", hide.ns = TRUE,
+    tip.length = 0, step.increase = 0.1, step.group.by = "Infection", y.position = 26
+  ) 
 
 
-  
 
