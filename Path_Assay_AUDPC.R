@@ -11,7 +11,7 @@ write.csv(Path_Test_AUDPC, file = "AUDPC.csv", row.names=FALSE)
 view(Path_Test_AUDPC)
 set.seed(123)
 library(datarium)
-Path_Test_AUDPC_Clean <- Path_Test_AUDPC[ -c(6:9) ]
+Path_Test_AUDPC_Clean <- Path_Test_AUDPC[ -c(6:12) ]
 #Check Random sample
 Path_Test_AUDPC_Clean %>%
   sample_n_by(Plant_Type, Infection, Solution, size = 1)
@@ -62,13 +62,13 @@ model
 # Do pairwise comparisons
 library(emmeans)
 pwc <- Path_Test_AUDPC %>%
-  group_by(Plant_Type, Infection) %>%
+  group_by(Plant_Type, Infection, Solution) %>%
   emmeans_test(audpc ~ Solution, p.adjust.method = "bonferroni") %>%
   select(-df, -statistic, -p) # Remove details
 pwc #This shows a sig difference between E and D when applied to M plants which are infected!
-
+get_emmeans(pwc)
 # Visualization: box plots with p-values
-pwc <- pwc %>% add_xy_position(x = "Solution")
+pwc <- pwc %>% add_xy_position(x = "Treatment_No")
 bxp +
   stat_pvalue_manual(
     pwc, color = "Plant_Type", linetype = "Infection", hide.ns = TRUE,
@@ -77,7 +77,23 @@ bxp +
   labs(
     subtitle = get_test_label(model, detailed = TRUE),
     caption = get_pwc_label(pwc)
-  )
+
+    mean_audpc <- Path_Test_AUDPC_Clean %>%
+      group_by(Treatment_No, Solution) %>%
+      summarise(Mean_audpc = mean(audpc, na.rm = TRUE),
+                Standard_Error = sd(audpc, na.rm = TRUE) / sqrt(sum(!is.na(audpc))))
+    
+    bar <-  ggbarplot(
+      mean_audpc, x = "Treatment_No", y = "Mean_audpc",
+      fill = "Solution", palette = "jco") +
+      geom_errorbar(aes(ymin = Mean_audpc - Standard_Error, ymax = Mean_audpc + Standard_Error), width=0.2, colour="black", alpha=0.5, linewidth=0.5)
+    bar
+    bar +
+      stat_pvalue_manual(
+        pwc,hide.ns = TRUE,
+        tip.length = 0, step.increase = 0.1, step.group.by = "Infection"
+      ) 
 
 
+  
 
