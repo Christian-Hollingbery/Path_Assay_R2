@@ -23,5 +23,15 @@ ggplot(Long_data, aes(x = Week, y = Mean_Disease_Score, group = Treatment_No, co
   geom_point() +
   geom_line() +
   geom_errorbar(aes(ymin = Mean_Disease_Score - Standard_Error, ymax = Mean_Disease_Score + Standard_Error), width=0.2, colour="black", alpha=0.5, linewidth=0.5)
-
+ggplot(Long_data, aes(x = Week, y = Mean_Disease_Score, group = Treatment_No, color = Treatment_No)) + 
+  geom_point() +
+  geom_line() +
+  geom_errorbar(aes(ymin = Mean_Disease_Score - Standard_Error, ymax = Mean_Disease_Score + Standard_Error), 
+                width = 0.2, colour = "black", alpha = 0.5, linewidth = 0.5) +
+  theme(legend.title = element_text(size = 8))+
+  theme(
+    legend.key.size = unit(1, "lines"),  # Reduce the size of the legend keys
+    legend.text = element_text(size = 8)  # Reduce the font size of legend text to 8 points
+  )
+   
 

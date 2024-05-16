@@ -6,7 +6,7 @@ Path_Test_Scoring <-read.csv("Path Test Scoring.csv")
 View(Path_Test_Scoring)    
 Path_Test_Scoring %>% 
   sample_n_by(Plant_Type, Infection, Solution, size = 1)
-Five_Weeks <- Path_Test_Scoring[ -c(1,3:5,11:12) ]
+Five_Weeks <- Path_Test_Scoring[ -c(1,3:5,11:13) ]
 Five_Weeks_Long <- pivot_longer(Five_Weeks, 
                           cols = -Treatment_No, 
                           names_to = "Week", 
@@ -19,9 +19,14 @@ Five_Weeks_Long <- Five_Weeks_Long %>%
 ggplot(Five_Weeks_Long, aes(x = Week, y = Mean_Disease_Score, group = Treatment_No, color = Treatment_No)) + 
   geom_point() +
   geom_line() +
-  geom_errorbar(aes(ymin = Mean_Disease_Score - Standard_Error, ymax = Mean_Disease_Score + Standard_Error), width=0.2, colour="black", alpha=0.5, linewidth=0.5)
+  geom_errorbar(aes(ymin = Mean_Disease_Score - Standard_Error, ymax = Mean_Disease_Score + Standard_Error), width=0.2, colour="black", alpha=0.5, linewidth=0.5) +
+  theme(legend.title = element_text(size = 8))+
+  theme(
+    legend.key.size = unit(1, "lines"),  # Reduce the size of the legend keys
+    legend.text = element_text(size = 8)  # Reduce the font size of legend text to 8 points
+  )
 
-library(agricolae) 
+ library(agricolae) 
 setwd("/Users/Kitchen/Library/CloudStorage/OneDrive-UniversityofKent/2nd Rotation/Lab work/Plant work/Path Test/Scoring")
 Path_Test_AUDPC <-read.csv("Path Test Scoring.csv")
 head(Path_Test_AUDPC)
@@ -80,14 +85,23 @@ mean_audpc_5 <- Path_Test_AUDPC_Clean %>%
   group_by( Solution, Infection, Plant_Type) %>%
   summarise(Mean_audpc = mean(audpc, na.rm = TRUE),
             Standard_Error = sd(audpc, na.rm = TRUE) / sqrt(sum(!is.na(audpc))))
-bar_5 <- ggplot(data = mean_audpc, aes(x = interaction(Infection, Plant_Type), y = Mean_audpc, fill = Solution)) +
+bar_5 <- ggplot(data = mean_audpc_5, aes(x = interaction(Infection, Plant_Type), y = Mean_audpc, fill = Solution)) +
   geom_bar(stat = "identity", position = "dodge") +
   labs(
     x = "Infection - Plant Type",
     y = "Mean audpc",
-    fill = "Solution")+
+    fill = "Solution", )+
   geom_errorbar(aes(ymin = Mean_audpc - Standard_Error, ymax = Mean_audpc + Standard_Error),
-                position = position_dodge(width = 0.9), width=0.2, colour="black", alpha=0.5, linewidth=0.5)
+                position = position_dodge(width = 0.9), width=0.2, colour="black", alpha=0.5, linewidth=0.5) +
+  ggtitle("5 Weeks") +
+  theme(
+    axis.text.x = element_text(margin = margin(t = 5)), 
+    axis.title.x = element_text(margin = margin(t = 12)),
+    axis.text.y = element_text(margin = margin(r = 5)),  
+    axis.title.y = element_text(margin = margin(r = 12)),
+    plot.title = element_text(hjust = 0.5) 
+  ) 
+  
 bar_5
 
 

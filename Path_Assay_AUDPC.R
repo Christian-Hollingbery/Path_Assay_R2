@@ -79,14 +79,22 @@ bxp +
       summarise(Mean_audpc = mean(audpc, na.rm = TRUE),
                 Standard_Error = sd(audpc, na.rm = TRUE) / sqrt(sum(!is.na(audpc))))
     
-bar_5 <- ggplot(data = mean_audpc, aes(x = interaction(Infection, Plant_Type), y = Mean_audpc, fill = Solution)) +
+bar <- ggplot(data = mean_audpc, aes(x = interaction(Infection, Plant_Type), y = Mean_audpc, fill = Solution)) +
       geom_bar(stat = "identity", position = "dodge") +
       labs(
         x = "Infection - Plant Type",
         y = "Mean audpc",
-        fill = "Solution")+
+        fill = "Solution", )+
       geom_errorbar(aes(ymin = Mean_audpc - Standard_Error, ymax = Mean_audpc + Standard_Error),
-                    position = position_dodge(width = 0.9), width=0.2, colour="black", alpha=0.5, linewidth=0.5)
+                    position = position_dodge(width = 0.9), width=0.2, colour="black", alpha=0.5, linewidth=0.5) +
+  ggtitle("8 Weeks") +
+  theme(
+    axis.text.x = element_text(margin = margin(t = 5)),  # Adjust top margin to increase gap
+    axis.title.x = element_text(margin = margin(t = 12)),
+    axis.text.y = element_text(margin = margin(r = 5)),  # Adjust top margin to increase gap
+    axis.title.y = element_text(margin = margin(r = 12)),
+    plot.title = element_text(hjust = 0.5) 
+  )
     bar
 pwc <- pwc %>% add_xy_position(x = "Solution")
 pwc.filtered <- pwc %>% filter(Plant_Type == "M", Infection == "I")
